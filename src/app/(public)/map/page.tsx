@@ -22,10 +22,6 @@ export default function MapPage() {
 
 function MapPageInner() {
   const searchParams = useSearchParams()
-  const mapLayout = useUIStore(s => s.mapLayout)
-
-  if (mapLayout === 'split') return <MapSplit initialQuery={searchParams.get('q') ?? ''} initialCat={searchParams.get('cat') ?? 'all'}/>
-  if (mapLayout === 'drawer') return <MapDrawer initialQuery={searchParams.get('q') ?? ''} initialCat={searchParams.get('cat') ?? 'all'}/>
   return <MapFloating initialQuery={searchParams.get('q') ?? ''} initialCat={searchParams.get('cat') ?? 'all'}/>
 }
 
@@ -58,32 +54,6 @@ function useMapState(initialQuery: string, initialCategory: string) {
 }
 
 type MapState = ReturnType<typeof useMapState>
-
-function MapSplit({ initialQuery, initialCat }: { initialQuery: string; initialCat: string }) {
-  const st = useMapState(initialQuery, initialCat)
-  const city = useUIStore(s => s.city)
-  return (
-    <main className="map-page route-mount">
-      <div className="map-split">
-        <aside className="map-split__list">
-          <ListHeader st={st} city={city}/>
-          <CategoryStrip st={st}/>
-          {st.foodTags.length > 0 && <ActiveFoodTags st={st}/>}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 12 }}>
-            {st.filtered.map(p => <PlaceCard key={p.id} place={p} compact/>)}
-            {st.filtered.length === 0 && <EmptyState/>}
-          </div>
-        </aside>
-        <div style={{ position: 'relative' }}>
-          <GMap pins={st.filtered} selectedId={st.selectedId} onSelect={p => st.setSel(p.id)} city={city}/>
-          <SelectedPopup st={st}/>
-          <FabColumn/>
-        </div>
-        <MobileSheet st={st}/>
-      </div>
-    </main>
-  )
-}
 
 function MapFloating({ initialQuery, initialCat }: { initialQuery: string; initialCat: string }) {
   const st = useMapState(initialQuery, initialCat)
@@ -122,56 +92,6 @@ function MapFloating({ initialQuery, initialCat }: { initialQuery: string; initi
   )
 }
 
-function MapDrawer({ initialQuery, initialCat }: { initialQuery: string; initialCat: string }) {
-  const st = useMapState(initialQuery, initialCat)
-  const city = useUIStore(s => s.city)
-  const [drawerOpen, setDrawerOpen] = useState(true)
-  return (
-    <main className="map-page route-mount">
-      <GMap pins={st.filtered} selectedId={st.selectedId} onSelect={p => st.setSel(p.id)} city={city}/>
-      <button onClick={() => setDrawerOpen(o => !o)} className="map-drawer-toggle btn" style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow)' }} aria-label="Toggle list">
-        <I.menu size={16}/> {drawerOpen ? 'Hide' : 'Show'} list
-      </button>
-      <FabColumn/>
-      <aside className={'map-drawer' + (drawerOpen ? ' is-open' : '')}>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '0 0 12px' }}>
-          <I.search size={16}/>
-          <input value={st.query} onChange={e => st.setQuery(e.target.value)} placeholder='Search…' style={{ flex: 1, border: 0, outline: 'none', font: 'inherit', fontSize: 14, background: 'transparent' }}/>
-          {st.query && <button className="btn btn-sq btn-ghost" onClick={() => st.setQuery('')}><I.x size={14}/></button>}
-          <button className="btn btn-sq btn-ghost" onClick={() => st.setOpenFilters(true)}><I.sliders size={16}/></button>
-        </div>
-        <CategoryStrip st={st}/>
-        {st.foodTags.length > 0 && <ActiveFoodTags st={st}/>}
-        <div style={{ marginTop: 12, marginBottom: 8, fontSize: 12, color: 'var(--muted)' }}>
-          {st.filtered.length} {st.filtered.length === 1 ? 'place' : 'places'}
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {st.filtered.map(p => <PlaceCard key={p.id} place={p} compact/>)}
-        </div>
-      </aside>
-      <SelectedPopup st={st} offsetForDrawer={drawerOpen}/>
-      <MobileSheet st={st}/>
-      {st.openFilters && <FilterModal st={st} onClose={() => st.setOpenFilters(false)}/>}
-    </main>
-  )
-}
-
-function ListHeader({ st, city }: { st: MapState; city: string }) {
-  return (
-    <div style={{ marginBottom: 12 }}>
-      <div className="mono" style={{ marginBottom: 4 }}>{city === 'phuket' ? 'Phuket' : 'Bangkok'} · explore</div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
-        <h2 className="h3" style={{ margin: 0 }}>{st.filtered.length} {st.filtered.length === 1 ? 'place' : 'places'}</h2>
-        <button className="btn btn-ghost" style={{ padding: '4px 8px', fontSize: 12 }} onClick={() => st.setOpenFilters(true)}><I.sliders size={14}/> Filter</button>
-      </div>
-      <div style={{ position: 'relative' }}>
-        <I.search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)' }}/>
-        <input value={st.query} onChange={e => st.setQuery(e.target.value)} placeholder='Search "boat market"…' className="input" style={{ width: '100%', paddingLeft: 36 }}/>
-      </div>
-    </div>
-  )
-}
-
 function CategoryStrip({ st }: { st: MapState }) {
   const showCannabis = useUIStore(s => s.showCannabis)
   const cats = CATEGORIES.filter(c => !c.optional || showCannabis)
@@ -181,18 +101,6 @@ function CategoryStrip({ st }: { st: MapState }) {
       {cats.map(c => (
         <button key={c.id} onClick={() => st.setCat(c.id === st.activeCat ? 'all' : c.id)}
                 className={'chip chip-brand' + (c.id === st.activeCat ? ' is-on' : '')}>{c.label}</button>
-      ))}
-    </div>
-  )
-}
-
-function ActiveFoodTags({ st }: { st: MapState }) {
-  return (
-    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
-      {st.foodTags.map(t => (
-        <button key={t} onClick={() => st.setFoodTags(st.foodTags.filter(x => x !== t))} className="chip is-on" style={{ background: 'var(--gold)', color: '#1B1816' }}>
-          {t} <span style={{ marginLeft: 4, opacity: .6 }}>×</span>
-        </button>
       ))}
     </div>
   )
@@ -296,11 +204,3 @@ function FilterModal({ st, onClose }: { st: MapState; onClose: () => void }) {
   )
 }
 
-function EmptyState() {
-  return (
-    <div className="card card-flat" style={{ textAlign: 'center', padding: 24, color: 'var(--muted)' }}>
-      <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>No matches.</div>
-      <div style={{ fontSize: 12 }}>Try &ldquo;buffet&rdquo;, &ldquo;boat market&rdquo;, or &ldquo;muay thai&rdquo;.</div>
-    </div>
-  )
-}

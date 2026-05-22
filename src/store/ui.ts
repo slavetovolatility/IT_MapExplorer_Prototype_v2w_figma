@@ -14,11 +14,7 @@ interface UIState {
   drawerOpen: boolean
   setDrawerOpen: (open: boolean) => void
 
-  // Dev tweaks — gated to development only in the UI
-  homeLayout: 'hub' | 'mapfirst' | 'editorial'
-  mapLayout: 'split' | 'floating' | 'drawer'
   showCannabis: boolean
-  setTweak: <K extends 'homeLayout' | 'mapLayout' | 'showCannabis'>(key: K, value: UIState[K]) => void
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -40,8 +36,5 @@ export const useUIStore = create<UIState>((set) => ({
   drawerOpen: false,
   setDrawerOpen: (drawerOpen) => set({ drawerOpen }),
 
-  homeLayout: 'hub',
-  mapLayout: 'floating',
   showCannabis: false,
-  setTweak: (key, value) => set({ [key]: value } as Partial<UIState>),
 }))

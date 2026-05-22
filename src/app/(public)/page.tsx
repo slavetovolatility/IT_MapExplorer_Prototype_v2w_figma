@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useUIStore } from '@/store/ui'
 import { CATEGORIES, CITIES, PLACES, GUIDES, TOURIST_TOOLS } from '@/data'
-import { Slot } from '@/components/ui/Slot'
 import { PlaceCard } from '@/components/ui/PlaceCard'
 import { CategoryTile } from '@/components/ui/CategoryTile'
 import { SectionHead } from '@/components/ui/SectionHead'
@@ -12,9 +11,6 @@ import { GMap } from '@/components/map/GMap'
 import I from '@/components/ui/icons'
 
 export default function HomePage() {
-  const homeLayout = useUIStore(s => s.homeLayout)
-  if (homeLayout === 'mapfirst') return <HomeMapFirst/>
-  if (homeLayout === 'editorial') return <HomeEditorial/>
   return <HomeHub/>
 }
 
@@ -130,122 +126,6 @@ function HomeHub() {
               <Link href="/" className="btn" style={{ background: 'rgba(255,255,255,.08)', color: 'var(--text-on-deep)', boxShadow: 'none' }}>How review works</Link>
             </div>
           </div>
-        </div>
-      </section>
-    </main>
-  )
-}
-
-function HomeMapFirst() {
-  const router = useRouter()
-  const city = useUIStore(s => s.city)
-  const showCannabis = useUIStore(s => s.showCannabis)
-  const cats = CATEGORIES.filter(c => !c.optional || showCannabis).slice(0, 8)
-  const places = PLACES.filter(p => (!p.optional || showCannabis) && p.city === city)
-
-  return (
-    <main className="route-mount">
-      <section style={{ position: 'relative', padding: 0 }}>
-        <div className="wrap" style={{ padding: '24px var(--gutter) 16px', position: 'relative', zIndex: 2 }}>
-          <div className="mono" style={{ marginBottom: 10 }}>Inside Thailand</div>
-          <h1 className="h1" style={{ maxWidth: 900 }}>
-            Find your next <span style={{ color: 'var(--brand)' }} className="italic">place</span>.
-          </h1>
-          <p style={{ color: 'var(--muted)', maxWidth: 540, marginBottom: 18 }}>
-            {places.length} places mapped across {city === 'phuket' ? 'Phuket' : 'Bangkok'} — categorised, filtered, opinionated.
-          </p>
-          <form className="searchbar" onSubmit={(e) => {
-            e.preventDefault()
-            const q = (new FormData(e.currentTarget).get('q') as string) || ''
-            router.push('/map' + (q ? `?q=${encodeURIComponent(q)}` : ''))
-          }}>
-            <input name="q" placeholder='Try "boat market", "rooftop bar"…'/>
-            <button className="btn btn-primary"><I.search size={18}/> Search</button>
-          </form>
-        </div>
-        <div style={{ position: 'relative', height: 'clamp(280px, 36vw, 460px)', marginTop: -12 }}>
-          <GMap pins={places} city={city}/>
-          <Link href="/map" className="btn btn-dark btn-lg" style={{ position: 'absolute', left: '50%', bottom: 22, transform: 'translateX(-50%)' }}>
-            <I.map size={18}/> Open full map
-          </Link>
-        </div>
-      </section>
-
-      <section className="wrap" style={{ marginTop: 48, marginBottom: 48 }}>
-        <SectionHead title="Pick a category" subtitle="Or filter the map yourself."/>
-        <div style={{ display: 'grid', gap: 10, gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
-          {cats.map(c => <CategoryTile key={c.id} category={c}/>)}
-        </div>
-      </section>
-
-      <section className="wrap" style={{ marginBottom: 56 }}>
-        <SectionHead kicker="Hand-picked" title="Featured places"/>
-        <div style={{ display: 'grid', gap: 14, gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
-          {places.slice(0, 6).map(p => <PlaceCard key={p.id} place={p}/>)}
-        </div>
-      </section>
-
-      <section className="wrap" style={{ marginBottom: 56 }}>
-        <SectionHead title="Tourist tools"/>
-        <div style={{ display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
-          {TOURIST_TOOLS.slice(0, 4).map(t => <ToolCard key={t.id} tool={t}/>)}
-        </div>
-      </section>
-    </main>
-  )
-}
-
-function HomeEditorial() {
-  const router = useRouter()
-  const city = useUIStore(s => s.city)
-  const showCannabis = useUIStore(s => s.showCannabis)
-  const places = PLACES.filter(p => (!p.optional || showCannabis) && p.city === city)
-
-  return (
-    <main className="route-mount">
-      <section className="wrap" style={{ padding: '32px 0 24px' }}>
-        <div style={{ display: 'grid', gap: 24, gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', alignItems: 'center' }}>
-          <div>
-            <div className="mono" style={{ marginBottom: 12 }}>Issue 03 · May 2026</div>
-            <h1 className="h1">
-              The Bangkok <span style={{ color: 'var(--brand)' }} className="italic">we&apos;d</span><br/>
-              actually show a friend.
-            </h1>
-            <p style={{ color: 'var(--muted)', marginTop: 14, maxWidth: 520 }}>
-              Hand-picked places, working transport tips, scams to skip, and the prices nobody tells you.
-            </p>
-            <div style={{ display: 'flex', gap: 10, marginTop: 22, flexWrap: 'wrap' }}>
-              <Link href="/map" className="btn btn-primary btn-lg"><I.map size={18}/> Open the map</Link>
-              <Link href="/guides" className="btn btn-lg">Read the guides</Link>
-            </div>
-          </div>
-          <div>
-            <Slot tone="charcoal" label={places[0]?.slot.label || 'Featured'} sub={places[0]?.slot.sub} h={420} tag="THIS WEEK"/>
-          </div>
-        </div>
-      </section>
-
-      <section className="wrap" style={{ marginBottom: 48 }}>
-        <form className="searchbar" onSubmit={(e) => {
-          e.preventDefault()
-          const q = (new FormData(e.currentTarget).get('q') as string) || ''
-          router.push('/map' + (q ? `?q=${encodeURIComponent(q)}` : ''))
-        }} style={{ maxWidth: '100%' }}>
-          <input name="q" placeholder='Search 240 places in Bangkok, 68 in Phuket…'/>
-          <button className="btn btn-primary"><I.search size={18}/> Search</button>
-        </form>
-      </section>
-
-      <section className="wrap" style={{ marginBottom: 56 }}>
-        <div style={{ display: 'grid', gap: 14, gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))' }}>
-          {places.slice(0, 6).map(p => <PlaceCard key={p.id} place={p}/>)}
-        </div>
-      </section>
-
-      <section className="wrap" style={{ marginBottom: 56 }}>
-        <SectionHead kicker="Tools" title="Built for everyday Thailand"/>
-        <div style={{ display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
-          {TOURIST_TOOLS.slice(0, 6).map(t => <ToolCard key={t.id} tool={t}/>)}
         </div>
       </section>
     </main>
