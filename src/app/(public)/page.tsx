@@ -3,7 +3,8 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useUIStore } from '@/store/ui'
-import { CATEGORIES, CITIES, PLACES, GUIDES, TOURIST_TOOLS } from '@/data'
+import { CATEGORIES, CITIES, GUIDES, TOURIST_TOOLS } from '@/data'
+import { usePlaces } from '@/hooks/usePlaces'
 import { PlaceCard } from '@/components/ui/PlaceCard'
 import { CategoryTile } from '@/components/ui/CategoryTile'
 import { SectionHead } from '@/components/ui/SectionHead'
@@ -20,8 +21,9 @@ function HomeHub() {
   const setCity = useUIStore(s => s.setCity)
   const showCannabis = useUIStore(s => s.showCannabis)
 
+  const { places: cityPlaces } = usePlaces(city)
   const cats = CATEGORIES.filter(c => !c.optional || showCannabis)
-  const places = PLACES.filter(p => (!p.optional || showCannabis) && p.city === city)
+  const places = cityPlaces.filter(p => !p.optional || showCannabis)
   const featured = places.slice(0, 6)
   const guides = GUIDES.slice(0, 4)
 
@@ -133,7 +135,8 @@ function HomeHub() {
 }
 
 export function MapPreviewCard({ city }: { city: string }) {
-  const places = PLACES.filter(p => p.city === city).slice(0, 8)
+  const { places: cityPlaces } = usePlaces(city)
+  const places = cityPlaces.slice(0, 8)
   return (
     <Link href="/map" className="card card-hov" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <div style={{ position: 'relative', height: 200 }}>

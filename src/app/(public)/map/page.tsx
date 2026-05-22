@@ -4,7 +4,8 @@ import { useState, useMemo, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { useUIStore } from '@/store/ui'
-import { PLACES, CATEGORIES, FOOD_FILTERS } from '@/data'
+import { CATEGORIES, FOOD_FILTERS } from '@/data'
+import { usePlaces } from '@/hooks/usePlaces'
 import { PlaceCard } from '@/components/ui/PlaceCard'
 import { Slot } from '@/components/ui/Slot'
 import { PriceMark } from '@/components/ui/PriceMark'
@@ -28,13 +29,14 @@ function MapPageInner() {
 function useMapState(initialQuery: string, initialCategory: string) {
   const city = useUIStore(s => s.city)
   const showCannabis = useUIStore(s => s.showCannabis)
+  const { places: cityPlaces } = usePlaces(city)
   const [query, setQuery] = useState(initialQuery)
   const [activeCat, setCat] = useState(initialCategory)
   const [foodTags, setFoodTags] = useState<string[]>([])
   const [selectedId, setSel] = useState<string | null>(null)
   const [openFilters, setOpenFilters] = useState(false)
 
-  const all = PLACES.filter(p => (!p.optional || showCannabis) && p.city === city)
+  const all = cityPlaces.filter(p => !p.optional || showCannabis)
 
   const filtered = useMemo(() => {
     let r = all
@@ -50,7 +52,7 @@ function useMapState(initialQuery: string, initialCategory: string) {
     return r
   }, [all, activeCat, foodTags, query])
 
-  return { query, setQuery, activeCat, setCat, foodTags, setFoodTags, filtered, selectedId, setSel, openFilters, setOpenFilters }
+  return { query, setQuery, activeCat, setCat, foodTags, setFoodTags, filtered, cityPlaces, selectedId, setSel, openFilters, setOpenFilters }
 }
 
 type MapState = ReturnType<typeof useMapState>
@@ -107,7 +109,7 @@ function CategoryStrip({ st }: { st: MapState }) {
 }
 
 function SelectedPopup({ st, offsetForDrawer }: { st: MapState; offsetForDrawer?: boolean }) {
-  const place = st.selectedId ? PLACES.find(p => p.id === st.selectedId) : null
+  const place = st.selectedId ? st.cityPlaces.find(p => p.id === st.selectedId) : null
   const savedSet = useUIStore(s => s.savedSet)
   const toggleSave = useUIStore(s => s.toggleSave)
   if (!place) return null
