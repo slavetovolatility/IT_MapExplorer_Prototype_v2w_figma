@@ -45,6 +45,7 @@ function rowToCategory(r: Record<string, any>): Category {
 }
 
 export async function fetchPlaces(city?: string): Promise<Place[]> {
+  if (!supabase) return []
   let q = supabase.from('places').select('*').eq('status', 'approved')
   if (city) q = q.eq('city', city)
 
@@ -54,6 +55,7 @@ export async function fetchPlaces(city?: string): Promise<Place[]> {
 }
 
 export async function fetchPlace(slug: string): Promise<Place | null> {
+  if (!supabase) return null
   const { data, error } = await supabase
     .from('places').select('*').eq('slug', slug).eq('status', 'approved').single()
   if (error) { console.error('[db] fetchPlace:', error.message); return null }
@@ -61,6 +63,7 @@ export async function fetchPlace(slug: string): Promise<Place | null> {
 }
 
 export async function fetchCategories(): Promise<Category[]> {
+  if (!supabase) return []
   const { data, error } = await supabase
     .from('categories').select('*').order('sort_order')
   if (error) { console.error('[db] fetchCategories:', error.message); return [] }
