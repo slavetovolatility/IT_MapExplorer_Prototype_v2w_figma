@@ -127,7 +127,7 @@ function ProfileMenu() {
             <div style={{ color: 'var(--muted)', fontSize: 12 }}>{userEmail}</div>
           </div>
           <Link href="/saved" style={menuRow}><I.bookmark size={16}/> Saved places</Link>
-          <Link href="/account" style={menuRow}><I.user size={16}/> Recently viewed</Link>
+          <Link href="/recently-viewed" style={menuRow}><I.clock size={16}/> Recently viewed</Link>
           <Link href="/submit" style={menuRow}><I.plus size={16}/> Submit a place</Link>
           <Link href="/account" style={menuRow}><I.sliders size={16}/> Account &amp; settings</Link>
           <div style={{ borderTop: '1px solid var(--line)', margin: '6px -8px 0' }}/>

@@ -4,9 +4,7 @@ import Link from 'next/link'
 import { useUIStore } from '@/store/ui'
 import { supabase } from '@/lib/supabase'
 import { SectionHead } from '@/components/ui/SectionHead'
-import { PlaceCard } from '@/components/ui/PlaceCard'
-import { useRecentlyViewed } from '@/hooks/useRecentlyViewed'
-import { CITIES, PLACES } from '@/data'
+import { CITIES } from '@/data'
 import I from '@/components/ui/icons'
 
 export default function AccountPage() {
@@ -18,13 +16,6 @@ export default function AccountPage() {
   const showCannabis = useUIStore(s => s.showCannabis)
   const setShowCannabis = useUIStore(s => s.setShowCannabis)
   const savedSet = useUIStore(s => s.savedSet)
-  const recentIds = useRecentlyViewed()
-
-  const savedPlaces = PLACES.filter(p => savedSet.has(p.id))
-  const recentPlaces = recentIds
-    .map(id => PLACES.find(p => p.id === id))
-    .filter((p): p is NonNullable<typeof p> => Boolean(p))
-    .slice(0, 4)
 
   if (!signedIn) {
     return (
@@ -67,7 +58,19 @@ export default function AccountPage() {
       </section>
 
       <section className="wrap" style={{ marginBottom: 32 }}>
-        <SectionHead title="Account &amp; settings"/>
+        <SectionHead title="Quick links"/>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <Link href="/saved" className="btn">
+            <I.bookmark size={15}/> Saved places
+            {savedSet.size > 0 && <span style={{ marginLeft: 4, background: 'var(--brand)', color: '#fff', borderRadius: 999, fontSize: 11, padding: '1px 6px' }}>{savedSet.size}</span>}
+          </Link>
+          <Link href="/recently-viewed" className="btn"><I.clock size={15}/> Recently viewed</Link>
+          <Link href="/submit" className="btn"><I.plus size={15}/> Submit a place</Link>
+        </div>
+      </section>
+
+      <section className="wrap" style={{ marginBottom: 32 }}>
+        <SectionHead title="Settings"/>
         <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '14px 18px', borderBottom: '1px solid var(--line)', alignItems: 'center', fontSize: 14 }}>
             <span>Email</span>
@@ -108,34 +111,6 @@ export default function AccountPage() {
             </button>
           </div>
         </div>
-      </section>
-
-      {recentPlaces.length > 0 && (
-        <section className="wrap" style={{ marginBottom: 32 }}>
-          <SectionHead title="Recently viewed"/>
-          <div style={{ display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
-            {recentPlaces.map(p => <PlaceCard key={p.id} place={p} compact/>)}
-          </div>
-        </section>
-      )}
-
-      <section className="wrap" style={{ marginBottom: 32 }}>
-        <SectionHead
-          title={`Saved places${savedPlaces.length > 0 ? ` · ${savedPlaces.length}` : ''}`}
-          action={savedPlaces.length > 0 ? <Link href="/saved" className="btn">View all</Link> : undefined}
-        />
-        {savedPlaces.length === 0 ? (
-          <div className="card card-flat" style={{ padding: 24, textAlign: 'center' }}>
-            <div style={{ fontSize: 13, color: 'var(--muted)' }}>
-              Tap the <I.bookmark size={13} style={{ verticalAlign: 'middle' }}/> bookmark on any place to save it. Your list syncs across devices.
-            </div>
-            <Link href="/map" className="btn btn-primary" style={{ marginTop: 14, display: 'inline-flex' }}>Browse the map</Link>
-          </div>
-        ) : (
-          <div style={{ display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
-            {savedPlaces.slice(0, 6).map(p => <PlaceCard key={p.id} place={p} compact/>)}
-          </div>
-        )}
       </section>
 
       <section className="wrap" style={{ marginBottom: 56 }}>
