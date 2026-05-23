@@ -1,10 +1,11 @@
 'use client'
 
-import { use } from 'react'
+import { use, useEffect } from 'react'
 import Link from 'next/link'
 import { useUIStore } from '@/store/ui'
 import { PLACES, CATEGORIES, STATIONS } from '@/data'
 import { usePlace } from '@/hooks/usePlaces'
+import { trackView } from '@/lib/recentlyViewed'
 import { Slot } from '@/components/ui/Slot'
 import { PriceMark } from '@/components/ui/PriceMark'
 import { StarRating } from '@/components/ui/StarRating'
@@ -19,6 +20,8 @@ export default function PlacePage({ params }: { params: Promise<{ slug: string }
   const savedSet = useUIStore(s => s.savedSet)
   const toggleSave = useUIStore(s => s.toggleSave)
   const signedIn = useUIStore(s => s.signedIn)
+
+  useEffect(() => { if (place) trackView(place.id) }, [place])
 
   if (!place) {
     return (
