@@ -11,11 +11,24 @@ const BLANK: AppRow = {
 
 export default function AdminAppsPage() {
   const [apps, setApps] = useState<AppRow[]>([])
+  const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<string | null>(null)
   const [editing, setEditing] = useState<AppRow | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const reload = () => adminFetchApps().then(setApps)
+  const reload = async () => {
+    setLoading(true)
+    setFetchError(null)
+    try {
+      const data = await adminFetchApps()
+      setApps(data)
+    } catch (e) {
+      setFetchError(String(e))
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => { reload() }, [])
 
@@ -97,7 +110,14 @@ export default function AdminAppsPage() {
         </div>
       )}
 
+      {fetchError && (
+        <div style={{ color: 'var(--brand)', fontSize: 13, marginBottom: 16, padding: '10px 14px', background: '#C13D2F10', borderRadius: 8 }}>
+          Error loading apps: {fetchError}
+        </div>
+      )}
+
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {loading && <p style={{ color: 'var(--muted)', fontSize: 14 }}>Loading…</p>}
         {apps.map(app => (
           <div key={app.id} className="card" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px' }}>
             <div style={{ width: 36, height: 36, borderRadius: 9, background: '#C13D2F18', color: 'var(--brand)', display: 'grid', placeItems: 'center', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 15, flexShrink: 0 }}>
@@ -127,7 +147,7 @@ export default function AdminAppsPage() {
             </button>
           </div>
         ))}
-        {apps.length === 0 && <p style={{ color: 'var(--muted)', fontSize: 14 }}>No apps yet.</p>}
+        {!loading && apps.length === 0 && !fetchError && <p style={{ color: 'var(--muted)', fontSize: 14 }}>No apps yet.</p>}
       </div>
     </div>
   )
