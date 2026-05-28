@@ -113,6 +113,16 @@ export async function fetchPlace(slug: string): Promise<Place | null> {
   return data ? rowToPlace(data) : null
 }
 
+export async function fetchPlacesByStation(stationId: string): Promise<Place[]> {
+  if (!supabase) return []
+  const { data, error } = await supabase
+    .from('places').select('*')
+    .eq('status', 'approved').eq('nearest_station', stationId)
+    .order('rating', { ascending: false })
+  if (error) { console.error('[db] fetchPlacesByStation:', error.message); return [] }
+  return (data ?? []).map(rowToPlace)
+}
+
 export async function fetchCategories(): Promise<Category[]> {
   if (!supabase) return []
   const { data, error } = await supabase
@@ -141,6 +151,28 @@ export async function deleteSaved(userId: string, placeSlug: string): Promise<vo
   const { error } = await supabase
     .from('saved_places').delete().eq('user_id', userId).eq('place_slug', placeSlug)
   if (error) console.error('[db] deleteSaved:', error.message)
+}
+
+// ── Recently viewed (per-user, cross-device) ───────────────────────────────────
+
+export async function trackPlaceView(userId: string, placeSlug: string): Promise<void> {
+  if (!supabase) return
+  const { error } = await supabase
+    .from('place_views')
+    .upsert(
+      { user_id: userId, place_slug: placeSlug, viewed_at: new Date().toISOString() },
+      { onConflict: 'user_id,place_slug' },
+    )
+  if (error) console.error('[db] trackPlaceView:', error.message)
+}
+
+export async function fetchRecentlyViewedSlugs(userId: string, limit = 12): Promise<string[]> {
+  if (!supabase) return []
+  const { data, error } = await supabase
+    .from('place_views').select('place_slug').eq('user_id', userId)
+    .order('viewed_at', { ascending: false }).limit(limit)
+  if (error) { console.error('[db] fetchRecentlyViewedSlugs:', error.message); return [] }
+  return (data ?? []).map(r => r.place_slug)
 }
 
 export interface SubmissionPayload {

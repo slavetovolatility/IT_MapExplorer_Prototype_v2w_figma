@@ -6,6 +6,7 @@ import { useUIStore } from '@/store/ui'
 import { PLACES, CATEGORIES, STATIONS } from '@/data'
 import { usePlace } from '@/hooks/usePlaces'
 import { trackView } from '@/lib/recentlyViewed'
+import { trackPlaceView } from '@/lib/db'
 import { Slot } from '@/components/ui/Slot'
 import { PriceMark } from '@/components/ui/PriceMark'
 import { StarRating } from '@/components/ui/StarRating'
@@ -20,8 +21,13 @@ export default function PlacePage({ params }: { params: Promise<{ slug: string }
   const savedSet = useUIStore(s => s.savedSet)
   const toggleSave = useUIStore(s => s.toggleSave)
   const signedIn = useUIStore(s => s.signedIn)
+  const userId = useUIStore(s => s.userId)
 
-  useEffect(() => { if (place) trackView(place.id) }, [place])
+  useEffect(() => {
+    if (!place) return
+    trackView(place.id)                                   // localStorage (instant, works signed-out)
+    if (signedIn && userId) trackPlaceView(userId, place.id)  // persist for cross-device history
+  }, [place, signedIn, userId])
 
   if (!place) {
     return (

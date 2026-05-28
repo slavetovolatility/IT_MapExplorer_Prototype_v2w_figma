@@ -3,15 +3,17 @@
 import { use } from 'react'
 import Link from 'next/link'
 import { useUIStore } from '@/store/ui'
-import { STATIONS, PLACES } from '@/data'
+import { STATIONS } from '@/data'
+import { usePlacesByStation } from '@/hooks/usePlaces'
 import { PlaceCard } from '@/components/ui/PlaceCard'
 import { SectionHead } from '@/components/ui/SectionHead'
 import I from '@/components/ui/icons'
 
 export default function StationPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params)
-  const station = STATIONS.find(s => s.id === slug)
   const showCannabis = useUIStore(s => s.showCannabis)
+  const { places: stationPlaces } = usePlacesByStation(slug)
+  const station = STATIONS.find(s => s.id === slug)
 
   if (!station) {
     return (
@@ -23,7 +25,7 @@ export default function StationPage({ params }: { params: Promise<{ slug: string
     )
   }
 
-  const places = PLACES.filter(p => (!p.optional || showCannabis) && p.station === station.id)
+  const places = stationPlaces.filter(p => !p.optional || showCannabis)
 
   return (
     <main className="route-mount">

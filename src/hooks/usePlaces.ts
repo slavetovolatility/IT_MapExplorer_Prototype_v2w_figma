@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import type { Place, Category } from '@/types'
-import { fetchPlaces, fetchPlace, fetchCategories } from '@/lib/db'
+import { fetchPlaces, fetchPlace, fetchPlacesByStation, fetchCategories } from '@/lib/db'
 import { PLACES, CATEGORIES } from '@/data'
 
 export function usePlaces(city: string) {
@@ -23,6 +23,29 @@ export function usePlaces(city: string) {
     })
     return () => { cancelled = true }
   }, [city])
+
+  return { places, loading }
+}
+
+export function usePlacesByStation(stationId: string) {
+  const [places, setPlaces] = useState<Place[]>(() => PLACES.filter(p => p.station === stationId))
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    fetchPlacesByStation(stationId).then(rows => {
+      if (cancelled) return
+      setPlaces(rows.length > 0 ? rows : PLACES.filter(p => p.station === stationId))
+      setLoading(false)
+    }).catch(() => {
+      if (!cancelled) {
+        setPlaces(PLACES.filter(p => p.station === stationId))
+        setLoading(false)
+      }
+    })
+    return () => { cancelled = true }
+  }, [stationId])
 
   return { places, loading }
 }
