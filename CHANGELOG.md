@@ -6,6 +6,62 @@ All significant changes to this project are documented here.
 
 ## [Unreleased] — active development on `claude/busy-rubin-5UsMp`
 
+### Security hardening, bug fixes & polish
+- **HTTP security headers** on every response (`next.config.ts`): `X-Frame-Options: DENY`,
+  `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`,
+  `Strict-Transport-Security` (1 year, includeSubDomains), `Permissions-Policy` (no camera/mic,
+  geolocation self-only)
+- **Generic API error messages**: all three admin API routes (`/api/admin/places`,
+  `/api/admin/apps`, `/api/admin/stations`) now return `"Operation failed."` / `"Internal server
+  error."` instead of raw Supabase error strings that could leak table/column names. Errors are
+  logged server-side for diagnostics
+- **Shared admin API helper** (`src/app/api/admin/_lib.ts`): `makeClient` and `verifyAdmin`
+  extracted into one place; all three routes import from it instead of duplicating the client
+  factory
+- **Defence-in-depth admin role check**: `verifyAdmin(token)` is called at the top of every admin
+  API route handler — returns 403 if the user is not an admin. RLS remains the primary enforcer;
+  this is a backstop if a policy is accidentally dropped
+- **Slug length cap**: POST and DELETE on `/api/admin/places` now reject slugs longer than 80
+  characters (previously only checked format, not length)
+- **Fix: "related places" flash-404**: place detail page now shows a `Loading…` skeleton while
+  `usePlace` is fetching instead of immediately rendering "Place not found". The not-found state
+  only shows once loading is complete
+- **Fix: related places from DB**: related places on the detail page now fetches via new
+  `fetchPlacesByCategory(category, city, excludeSlug)` in `src/lib/db.ts` so admin-added places
+  surface in the "More like this" section (previously used the static `PLACES` array only)
+- **Fix: proper 404 HTTP status** on `/categories/[slug]` and `/cities/[slug]`: replaced custom
+  JSX "not found" with `notFound()` from Next.js so crawlers receive the correct HTTP 404
+- **Debounced map search** (`src/hooks/useDebounce.ts`): search input updates `query` state
+  immediately (responsive feel) but filtering waits 200 ms after the user stops typing, reducing
+  unnecessary work on every keystroke
+- **Viewport meta tag**: added `export const viewport: Viewport` to `src/app/layout.tsx` to
+  suppress the Next.js warning and make the viewport declaration explicit
+- **Error boundaries**: added `src/app/error.tsx` (root) and `src/app/(public)/error.tsx`
+  (public routes) so React render errors show a friendly "Something went wrong / Try again"
+  screen rather than a blank page
+
+### Searchable place tags (admin UI)
+- Admin → Places: each place card has a tag editor — chip-style add/remove with a curated list of
+  35 suggested tags (buffet, rooftop, halal, etc.). Changes save via `adminSavePlaceTags`
+  directly through the admin Supabase client
+- Admin → Submissions → Approve & Publish: promote form now includes a tag input field with the
+  same chip UX and suggested tags. Tags are passed through to `adminPromoteSubmission` and stored
+  in `places.tags_array`
+- Map search already matched `tags` — no search-layer changes needed. Tags are now editable so
+  any place can be found by broad terms not in its name or description
+- `AdminPlaceRow` interface and `adminFetchPlaces` select updated to include `tags_array`
+- New `adminSavePlaceTags(slug, tags[])` function in `src/lib/db.ts`
+
+### Sign-up password requirements
+- Live password checklist on the create-account form: checks length ≥ 8, lowercase, uppercase,
+  and one number as the user types (green ✓ / red ✗ per rule)
+- Checklist appears after the first keystroke. Submit button is disabled until all rules pass
+- Show/hide password toggle (eye icon) on the password field
+- Shared `PASSWORD_RULES` + `isPasswordValid` in `src/lib/validation.ts`; `I.eye` / `I.eyeOff`
+  added to the icon set
+- Note: Supabase dashboard password policy must be updated to match
+  (Auth → Settings: min 8, require lower/upper/number)
+
 ### Form input validation
 - New `src/lib/validation.ts`: shared helpers (`isValidSlug`, `isCoordInThailand`,
   `isValidEmail`), a `THAILAND_BOUNDS` box, and a `MAXLEN` map of field length caps

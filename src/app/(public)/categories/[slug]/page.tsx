@@ -1,6 +1,7 @@
 'use client'
 
 import { use, useState, useMemo } from 'react'
+import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { useUIStore } from '@/store/ui'
 import { CATEGORIES, FOOD_FILTERS } from '@/data'
@@ -31,15 +32,7 @@ export default function CategoryPage({ params }: { params: Promise<{ slug: strin
     return r
   }, [places, sortBy])
 
-  if (!cat) {
-    return (
-      <main className="wrap route-mount" style={{ padding: '80px 0', textAlign: 'center' }}>
-        <div className="mono">Category not found</div>
-        <h1 className="h1" style={{ marginTop: 10 }}>No such category.</h1>
-        <Link href="/" className="btn btn-primary btn-lg" style={{ marginTop: 24 }}>Go home</Link>
-      </main>
-    )
-  }
+  if (!cat) notFound()
 
   return (
     <main className="route-mount">

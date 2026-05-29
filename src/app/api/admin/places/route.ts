@@ -1,31 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { makeClient, verifyAdmin } from '../_lib'
 
 const BUCKET = 'place-photos'
-const MAX_BYTES = 5 * 1024 * 1024 // 5MB — matches the bucket's file_size_limit
-
-// Build a Supabase client that acts as the caller (their JWT), so storage + table
-// RLS see them as the admin. Mirrors src/app/api/admin/apps/route.ts.
-function makeClient(token: string) {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      global: { headers: { Authorization: `Bearer ${token}` } },
-      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-    }
-  )
-}
+const MAX_BYTES = 5 * 1024 * 1024
 
 export async function POST(request: NextRequest) {
   const token = request.headers.get('Authorization')?.replace('Bearer ', '')
   if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!await verifyAdmin(token)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   try {
     const form = await request.formData()
     const slug = form.get('slug')
     const file = form.get('file')
 
-    if (typeof slug !== 'string' || !/^[a-z0-9-]+$/i.test(slug)) {
+    if (typeof slug !== 'string' || slug.length > 80 || !/^[a-z0-9-]+$/i.test(slug)) {
       return NextResponse.json({ error: 'Invalid slug' }, { status: 400 })
     }
     if (!(file instanceof File)) {
@@ -46,7 +34,7 @@ export async function POST(request: NextRequest) {
     const { error: upErr } = await sb.storage
       .from(BUCKET)
       .upload(path, bytes, { contentType: file.type, upsert: true })
-    if (upErr) return NextResponse.json({ error: upErr.message }, { status: 400 })
+    if (upErr) { console.error('[api/admin/places] upload:', upErr.message); return NextResponse.json({ error: 'Upload failed.' }, { status: 400 }) }
 
     const { data: pub } = sb.storage.from(BUCKET).getPublicUrl(path)
     const url = pub.publicUrl
@@ -55,30 +43,31 @@ export async function POST(request: NextRequest) {
       .from('places')
       .update({ photos: [url], updated_at: new Date().toISOString() })
       .eq('slug', slug)
-    if (updErr) return NextResponse.json({ error: updErr.message }, { status: 400 })
+    if (updErr) { console.error('[api/admin/places] update:', updErr.message); return NextResponse.json({ error: 'Operation failed.' }, { status: 400 }) }
 
     return NextResponse.json({ url, error: null })
   } catch (err) {
-    return NextResponse.json({ error: err instanceof Error ? err.message : String(err) }, { status: 500 })
+    console.error('[api/admin/places] POST:', err instanceof Error ? err.message : String(err))
+    return NextResponse.json({ error: 'Internal server error.' }, { status: 500 })
   }
 }
 
 export async function DELETE(request: NextRequest) {
   const token = request.headers.get('Authorization')?.replace('Bearer ', '')
   if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!await verifyAdmin(token)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   try {
     const { slug } = await request.json()
-    if (typeof slug !== 'string' || !/^[a-z0-9-]+$/i.test(slug)) {
+    if (typeof slug !== 'string' || slug.length > 80 || !/^[a-z0-9-]+$/i.test(slug)) {
       return NextResponse.json({ error: 'Invalid slug' }, { status: 400 })
     }
     const sb = makeClient(token)
 
-    // Clear the reference on the place; also tidy up the stored files for this slug.
     const { error: updErr } = await sb
       .from('places')
       .update({ photos: [], updated_at: new Date().toISOString() })
       .eq('slug', slug)
-    if (updErr) return NextResponse.json({ error: updErr.message }, { status: 400 })
+    if (updErr) { console.error('[api/admin/places] delete-update:', updErr.message); return NextResponse.json({ error: 'Operation failed.' }, { status: 400 }) }
 
     const { data: files } = await sb.storage.from(BUCKET).list(slug)
     if (files && files.length > 0) {
@@ -87,6 +76,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ error: null })
   } catch (err) {
-    return NextResponse.json({ error: err instanceof Error ? err.message : String(err) }, { status: 500 })
+    console.error('[api/admin/places] DELETE:', err instanceof Error ? err.message : String(err))
+    return NextResponse.json({ error: 'Internal server error.' }, { status: 500 })
   }
 }
