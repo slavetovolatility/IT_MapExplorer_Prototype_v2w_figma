@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Fraunces, Geist, JetBrains_Mono } from 'next/font/google'
 import Script from 'next/script'
 import '@/app/globals.css'
@@ -23,6 +23,8 @@ const mono = JetBrains_Mono({
   variable: '--font-mono',
   display: 'swap',
 })
+
+export const viewport: Viewport = { width: 'device-width', initialScale: 1 }
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://insidethailand.com'),

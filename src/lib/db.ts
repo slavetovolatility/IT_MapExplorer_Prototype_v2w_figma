@@ -117,6 +117,16 @@ export async function fetchPlace(slug: string): Promise<Place | null> {
   return data ? rowToPlace(data) : null
 }
 
+export async function fetchPlacesByCategory(category: string, city: string, excludeSlug: string): Promise<Place[]> {
+  if (!supabase) return []
+  const { data, error } = await supabase
+    .from('places').select('*')
+    .eq('status', 'approved').eq('category_slug', category).eq('city', city).neq('slug', excludeSlug)
+    .order('rating', { ascending: false }).limit(3)
+  if (error) { console.error('[db] fetchPlacesByCategory:', error.message); return [] }
+  return (data ?? []).map(rowToPlace)
+}
+
 export async function fetchPlacesByStation(stationId: string): Promise<Place[]> {
   if (!supabase) return []
   const { data, error } = await supabase

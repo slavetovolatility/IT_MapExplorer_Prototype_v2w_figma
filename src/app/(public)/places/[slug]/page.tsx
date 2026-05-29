@@ -6,7 +6,7 @@ import { useUIStore } from '@/store/ui'
 import { PLACES, CATEGORIES, STATIONS } from '@/data'
 import { usePlace } from '@/hooks/usePlaces'
 import { trackView } from '@/lib/recentlyViewed'
-import { trackPlaceView, insertReport } from '@/lib/db'
+import { trackPlaceView, insertReport, fetchPlacesByCategory } from '@/lib/db'
 import { isValidEmail, MAXLEN } from '@/lib/validation'
 import { PlaceImage } from '@/components/ui/PlaceImage'
 import { PriceMark } from '@/components/ui/PriceMark'
@@ -18,17 +18,35 @@ import I from '@/components/ui/icons'
 
 export default function PlacePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params)
-  const { place } = usePlace(slug)
+  const { place, loading } = usePlace(slug)
   const savedSet = useUIStore(s => s.savedSet)
   const toggleSave = useUIStore(s => s.toggleSave)
   const signedIn = useUIStore(s => s.signedIn)
   const userId = useUIStore(s => s.userId)
+  const [related, setRelated] = useState<typeof PLACES>(() =>
+    PLACES.filter(p => p.category === (place?.category ?? '') && p.id !== slug).slice(0, 3)
+  )
 
   useEffect(() => {
     if (!place) return
-    trackView(place.id)                                   // localStorage (instant, works signed-out)
-    if (signedIn && userId) trackPlaceView(userId, place.id)  // persist for cross-device history
+    trackView(place.id)
+    if (signedIn && userId) trackPlaceView(userId, place.id)
   }, [place, signedIn, userId])
+
+  useEffect(() => {
+    if (!place) return
+    fetchPlacesByCategory(place.category, place.city, place.id).then(rows => {
+      if (rows.length > 0) setRelated(rows)
+    })
+  }, [place])
+
+  if (loading) {
+    return (
+      <main className="wrap route-mount" style={{ padding: '80px 0', textAlign: 'center' }}>
+        <div className="mono">Loading…</div>
+      </main>
+    )
+  }
 
   if (!place) {
     return (
@@ -42,7 +60,6 @@ export default function PlacePage({ params }: { params: Promise<{ slug: string }
 
   const cat = CATEGORIES.find(c => c.id === place.category)
   const saved = savedSet.has(place.id)
-  const related = PLACES.filter(p => p.category === place.category && p.id !== place.id).slice(0, 3)
 
   return (
     <main className="route-mount">

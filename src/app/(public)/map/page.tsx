@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect, Suspense } from 'react'
+import { useDebounce } from '@/hooks/useDebounce'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { useUIStore } from '@/store/ui'
@@ -31,6 +32,7 @@ function useMapState(initialQuery: string, initialCategory: string) {
   const showCannabis = useUIStore(s => s.showCannabis)
   const { places: cityPlaces } = usePlaces(city)
   const [query, setQuery] = useState(initialQuery)
+  const debouncedQuery = useDebounce(query, 200)
   const [activeCat, setCat] = useState(initialCategory)
   const [foodTags, setFoodTags] = useState<string[]>([])
   const [selectedId, setSel] = useState<string | null>(null)
@@ -50,16 +52,16 @@ function useMapState(initialQuery: string, initialCategory: string) {
     let r = all
     if (activeCat !== 'all') r = r.filter(p => p.category === activeCat)
     if (foodTags.length) r = r.filter(p => foodTags.some(t => (p.cuisine || []).includes(t)))
-    if (query.trim()) r = textMatch(r, query)
+    if (debouncedQuery.trim()) r = textMatch(r, debouncedQuery)
     return r
-  }, [all, activeCat, foodTags, query])
+  }, [all, activeCat, foodTags, debouncedQuery])
 
   // When a text query finds nothing in the selected city, fall back to all cities
   const crossCityResults = useMemo(() => {
-    if (!query.trim() || filtered.length > 0) return null
+    if (!debouncedQuery.trim() || filtered.length > 0) return null
     const allPlaces = PLACES.filter(p => !p.optional || showCannabis)
-    return textMatch(allPlaces, query)
-  }, [filtered, query, showCannabis])
+    return textMatch(allPlaces, debouncedQuery)
+  }, [filtered, debouncedQuery, showCannabis])
 
   const displayed = crossCityResults ?? filtered
   const isCrossCity = crossCityResults !== null && crossCityResults.length > 0

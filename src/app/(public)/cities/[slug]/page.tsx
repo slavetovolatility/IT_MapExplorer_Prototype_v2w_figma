@@ -1,6 +1,7 @@
 'use client'
 
 import { use } from 'react'
+import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { useUIStore } from '@/store/ui'
 import { CATEGORIES, CITIES } from '@/data'
@@ -40,15 +41,7 @@ export default function CityPage({ params }: { params: Promise<{ slug: string }>
   const showCannabis = useUIStore(s => s.showCannabis)
   const { places: cityPlaces } = usePlaces(slug)
 
-  if (!city) {
-    return (
-      <main className="wrap route-mount" style={{ padding: '80px 0', textAlign: 'center' }}>
-        <div className="mono">City not found</div>
-        <h1 className="h1" style={{ marginTop: 10 }}>No such city.</h1>
-        <Link href="/" className="btn btn-primary btn-lg" style={{ marginTop: 24 }}>Go home</Link>
-      </main>
-    )
-  }
+  if (!city) notFound()
 
   const places = cityPlaces.filter(p => !p.optional || showCannabis)
   const cats = CATEGORIES.filter(c => !c.optional || showCannabis).slice(0, 8)
