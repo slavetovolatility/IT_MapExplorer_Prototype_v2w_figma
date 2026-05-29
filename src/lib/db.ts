@@ -28,6 +28,8 @@ export interface SubmissionRow {
   address: string | null
   hours: string | null
   price_level: number | null
+  lat: number | null
+  lng: number | null
   submitted_by: string | null
   status: string
   created_at: string
@@ -185,6 +187,8 @@ export interface SubmissionPayload {
   address: string
   hours: string
   price_level: number | null
+  lat: number | null
+  lng: number | null
   submitted_by: string | null
 }
 
@@ -199,10 +203,61 @@ export async function insertSubmission(payload: SubmissionPayload): Promise<{ er
     address: payload.address || null,
     hours: payload.hours || null,
     price_level: payload.price_level,
+    lat: payload.lat,
+    lng: payload.lng,
     submitted_by: payload.submitted_by,
     status: 'pending',
   })
   if (error) { console.error('[db] insertSubmission:', error.message); return { error: error.message } }
+  return { error: null }
+}
+
+export interface PromotePayload {
+  submissionId: number
+  slug: string
+  name: string
+  category: string
+  city: string
+  area: string
+  description: string
+  address: string
+  hours: string
+  price_level: number
+  lat: number
+  lng: number
+}
+
+export async function adminPromoteSubmission(p: PromotePayload): Promise<{ error: string | null }> {
+  if (!supabase) return { error: 'Not connected' }
+  const { error: insertErr } = await supabase.from('places').insert({
+    slug: p.slug,
+    name: p.name,
+    category_slug: p.category,
+    city: p.city,
+    area: p.area || null,
+    description: p.description,
+    address: p.address || null,
+    hours: p.hours || null,
+    price_level: p.price_level,
+    lat: p.lat,
+    lng: p.lng,
+    status: 'approved',
+    rating: 0,
+    reviews_count: 0,
+    is_open: true,
+    is_optional: false,
+    photos: [],
+    tags_array: [],
+    tips_array: [],
+    price_range_json: {},
+    slot_tone: 'cream',
+    slot_label: p.name,
+    slot_sub: p.area || '',
+  })
+  if (insertErr) { console.error('[db] adminPromoteSubmission insert:', insertErr.message); return { error: insertErr.message } }
+  const { error: updateErr } = await supabase
+    .from('user_submissions').update({ status: 'approved' }).eq('id', p.submissionId)
+  if (updateErr) console.error('[db] adminPromoteSubmission update:', updateErr.message)
   return { error: null }
 }
 

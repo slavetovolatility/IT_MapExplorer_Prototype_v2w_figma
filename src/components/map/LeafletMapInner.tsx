@@ -50,6 +50,20 @@ function CityFollower({ city }: { city: string }) {
   return null
 }
 
+function SelectedFollower({ selectedId, pins }: { selectedId?: string | null; pins: Place[] }) {
+  const map = useMap()
+  const prev = useRef(selectedId)
+  useEffect(() => {
+    if (!map || !selectedId || prev.current === selectedId) return
+    prev.current = selectedId
+    const p = pins.find(pl => pl.id === selectedId)
+    if (!p) return
+    map.panTo({ lat: p.coords[0], lng: p.coords[1] })
+    map.setZoom(16)
+  }, [selectedId, pins, map])
+  return null
+}
+
 function MapControls() {
   const map = useMap()
   const [locating, setLocating] = useState(false)
@@ -119,20 +133,26 @@ interface Props {
 }
 
 export default function GoogleMapInner({ pins = [], selectedId, onSelect, city = 'bangkok' }: Props) {
-  const v = CITY_VIEW[city] ?? CITY_VIEW.bangkok
+  const cityView = CITY_VIEW[city] ?? CITY_VIEW.bangkok
+  const selPin = selectedId ? pins.find(p => p.id === selectedId) : null
+  const initialCenter = selPin
+    ? { lat: selPin.coords[0], lng: selPin.coords[1] }
+    : { lat: cityView.lat, lng: cityView.lng }
+  const initialZoom = selPin ? 16 : cityView.zoom
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? ''
 
   return (
     <APIProvider apiKey={apiKey}>
       <Map
-        defaultCenter={{ lat: v.lat, lng: v.lng }}
-        defaultZoom={v.zoom}
+        defaultCenter={initialCenter}
+        defaultZoom={initialZoom}
         mapId={MAP_ID}
         gestureHandling="greedy"
         disableDefaultUI
         style={{ width: '100%', height: '100%' }}
       >
         <CityFollower city={city} />
+        <SelectedFollower selectedId={selectedId} pins={pins} />
         <MapControls/>
         {pins.map(p => {
           const cat = CATEGORIES.find(c => c.id === p.category)

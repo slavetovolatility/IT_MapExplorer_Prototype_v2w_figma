@@ -10,9 +10,10 @@ import I from '@/components/ui/icons'
 type Form = {
   name: string; category: string; city: string; area: string
   desc: string; address: string; hours: string; price: number | null
+  lat: number | null; lng: number | null
 }
 
-const EMPTY: Form = { name: '', category: '', city: 'bangkok', area: '', desc: '', address: '', hours: '', price: null }
+const EMPTY: Form = { name: '', category: '', city: 'bangkok', area: '', desc: '', address: '', hours: '', price: null, lat: null, lng: null }
 
 export default function SubmitPage() {
   const signedIn = useUIStore(s => s.signedIn)
@@ -68,6 +69,8 @@ export default function SubmitPage() {
       address: form.address,
       hours: form.hours,
       price_level: form.price,
+      lat: form.lat,
+      lng: form.lng,
       submitted_by: userEmail,
     })
     setSubmitting(false)
@@ -144,6 +147,14 @@ export default function SubmitPage() {
               ))}
             </div>
           </div>
+          <div className="field">
+            <label>Map coordinates</label>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input className="input" type="number" step="any" value={form.lat ?? ''} onChange={e => set('lat', e.target.value ? parseFloat(e.target.value) : null)} placeholder="Latitude (e.g. 13.7563)" style={{ flex: 1 }}/>
+              <input className="input" type="number" step="any" value={form.lng ?? ''} onChange={e => set('lng', e.target.value ? parseFloat(e.target.value) : null)} placeholder="Longitude (e.g. 100.5018)" style={{ flex: 1 }}/>
+            </div>
+            <div className="hint">In Google Maps: right-click the place → &quot;What&apos;s here?&quot; → copy the two numbers that appear.</div>
+          </div>
         </>}
 
         {step === 3 && <>
@@ -156,6 +167,7 @@ export default function SubmitPage() {
               {form.price && <span> · {'฿'.repeat(form.price)}</span>}
             </div>
             {form.address && <div style={{ fontSize: 13, color: 'var(--muted)', marginTop: 4 }}>{form.address}</div>}
+            {form.lat != null && <div style={{ fontSize: 13, color: 'var(--muted)', marginTop: 4 }}>{form.lat}, {form.lng}</div>}
             <div style={{ fontSize: 13, marginTop: 12, lineHeight: 1.55 }}>{form.desc || '(description)'}</div>
           </div>
           {submitError && (
@@ -163,6 +175,15 @@ export default function SubmitPage() {
               {submitError}
             </div>
           )}
+          {form.lat == null && (
+            <div style={{ padding: '10px 14px', borderRadius: 10, background: '#D9A23A18', color: 'var(--gold)', fontSize: 12.5 }}>
+              No coordinates added — an editor will need to pin this manually before it appears on the map.
+            </div>
+          )}
+          <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', cursor: 'pointer', fontSize: 12.5, color: 'var(--text)' }}>
+            <input type="checkbox" required style={{ marginTop: 2, flexShrink: 0 }}/>
+            <span>This is a genuine, honest recommendation. I am not submitting this as an advertisement or on behalf of the owner/business. I understand that commercial self-promotion will result in removal.</span>
+          </label>
           <div style={{ fontSize: 12.5, color: 'var(--muted)' }}>By submitting you agree to our editorial standards. We may edit for accuracy and tone. You&apos;ll be credited.</div>
         </>}
 
