@@ -1,9 +1,13 @@
 import { create } from 'zustand'
 import { upsertSaved, deleteSaved } from '@/lib/db'
+import type { Lang } from '@/lib/i18n'
 
 interface UIState {
   city: string
   setCity: (city: string) => void
+
+  lang: Lang
+  setLang: (lang: Lang) => void
 
   savedSet: Set<string>
   toggleSave: (id: string) => void
@@ -29,6 +33,17 @@ interface UIState {
 export const useUIStore = create<UIState>((set, get) => ({
   city: 'bangkok',
   setCity: (city) => set({ city }),
+
+  // Defaults to 'en' on both server and first client render (so there's no
+  // hydration mismatch); LangProvider restores the saved choice after mount.
+  lang: 'en',
+  setLang: (lang) => {
+    if (typeof window !== 'undefined') {
+      try { localStorage.setItem('lang', lang) } catch { /* ignore */ }
+      document.documentElement.lang = lang
+    }
+    set({ lang })
+  },
 
   savedSet: new Set<string>(),
   toggleSave: (id) => {

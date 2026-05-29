@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { useUIStore } from '@/store/ui'
+import { useT } from '@/hooks/useT'
 import { supabase } from '@/lib/supabase'
 import { CITIES } from '@/data'
 import I from '@/components/ui/icons'
@@ -12,6 +13,7 @@ import I from '@/components/ui/icons'
 export function Header() {
   const pathname = usePathname()
   const router = useRouter()
+  const t = useT()
   const city = useUIStore(s => s.city)
   const setCity = useUIStore(s => s.setCity)
   const signedIn = useUIStore(s => s.signedIn)
@@ -30,10 +32,10 @@ export function Header() {
         </Link>
 
         <nav className="header__nav" aria-label="Primary">
-          <Link href="/map" className={isActive(['/map', '/places']) ? 'is-active' : ''}>Map</Link>
-          <Link href="/cities/bangkok" className={isActive(['/cities', '/categories']) ? 'is-active' : ''}>Explore</Link>
-          <Link href="/guides" className={isActive(['/guides', '/transport']) ? 'is-active' : ''}>Guides</Link>
-          <Link href="/tools" className={isActive(['/tools']) ? 'is-active' : ''}>Tools</Link>
+          <Link href="/map" className={isActive(['/map', '/places']) ? 'is-active' : ''}>{t('nav.map')}</Link>
+          <Link href="/cities/bangkok" className={isActive(['/cities', '/categories']) ? 'is-active' : ''}>{t('nav.explore')}</Link>
+          <Link href="/guides" className={isActive(['/guides', '/transport']) ? 'is-active' : ''}>{t('nav.guides')}</Link>
+          <Link href="/tools" className={isActive(['/tools']) ? 'is-active' : ''}>{t('nav.tools')}</Link>
         </nav>
 
         <div className="header__spacer"/>
@@ -41,7 +43,7 @@ export function Header() {
         <div className="header__search">
           <I.search size={16}/>
           <input
-            placeholder='Search "boat market", "rooftop bar"…'
+            placeholder={t('nav.search')}
             onKeyDown={(e) => {
               if (e.key === 'Enter') router.push('/map?q=' + encodeURIComponent(e.currentTarget.value))
             }}
@@ -64,14 +66,14 @@ export function Header() {
             <I.search size={18}/>
           </Link>
           {role === 'admin' && (
-            <Link href="/admin" className="btn btn-ghost inline-only-desktop" style={{ fontSize: 12, padding: '6px 10px', color: 'var(--brand)', fontWeight: 600 }}>Admin</Link>
+            <Link href="/admin" className="btn btn-ghost inline-only-desktop" style={{ fontSize: 12, padding: '6px 10px', color: 'var(--brand)', fontWeight: 600 }}>{t('nav.admin')}</Link>
           )}
           {signedIn ? (
             <ProfileMenu/>
           ) : (
             <>
-              <Link href="/signin" className="btn inline-only-tablet-up" style={{ background: 'transparent', boxShadow: 'none' }}>Sign in</Link>
-              <Link href="/signin" className="btn btn-primary inline-only-desktop">Get the local edge</Link>
+              <Link href="/signin" className="btn inline-only-tablet-up" style={{ background: 'transparent', boxShadow: 'none' }}>{t('nav.signin')}</Link>
+              <Link href="/signin" className="btn btn-primary inline-only-desktop">{t('nav.getEdge')}</Link>
             </>
           )}
           <button className="btn btn-sq btn-ghost only-mobile" aria-label="Menu" onClick={() => setDrawerOpen(true)}>
@@ -85,6 +87,7 @@ export function Header() {
 
 function ProfileMenu() {
   const [open, setOpen] = useState(false)
+  const t = useT()
   const signOut = useUIStore(s => s.signOut)
   const userEmail = useUIStore(s => s.userEmail)
   const role = useUIStore(s => s.role)
@@ -134,17 +137,17 @@ function ProfileMenu() {
             </div>
             <div style={{ color: 'var(--muted)', fontSize: 12 }}>{userEmail}</div>
           </div>
-          {role === 'admin' && <Link href="/admin" style={{ ...menuRow, color: 'var(--brand)', fontWeight: 600 }}><I.sliders size={16}/> Admin panel</Link>}
-          <Link href="/saved" style={menuRow}><I.bookmark size={16}/> Saved places</Link>
-          <Link href="/recently-viewed" style={menuRow}><I.clock size={16}/> Recently viewed</Link>
-          <Link href="/submit" style={menuRow}><I.plus size={16}/> Submit a place</Link>
-          <Link href="/account" style={menuRow}><I.sliders size={16}/> Account &amp; settings</Link>
+          {role === 'admin' && <Link href="/admin" style={{ ...menuRow, color: 'var(--brand)', fontWeight: 600 }}><I.sliders size={16}/> {t('menu.adminPanel')}</Link>}
+          <Link href="/saved" style={menuRow}><I.bookmark size={16}/> {t('menu.saved')}</Link>
+          <Link href="/recently-viewed" style={menuRow}><I.clock size={16}/> {t('menu.recent')}</Link>
+          <Link href="/submit" style={menuRow}><I.plus size={16}/> {t('menu.submit')}</Link>
+          <Link href="/account" style={menuRow}><I.sliders size={16}/> {t('menu.account')}</Link>
           <div style={{ borderTop: '1px solid var(--line)', margin: '6px -8px 0' }}/>
           <button
             onClick={handleSignOut}
             style={{ ...menuRow, width: '100%', border: 0, background: 'transparent', textAlign: 'left', cursor: 'pointer' }}
           >
-            Sign out
+            {t('menu.signout')}
           </button>
         </div>
       )}

@@ -6,6 +6,38 @@ All significant changes to this project are documented here.
 
 ## [Unreleased] — active development on `claude/busy-rubin-5UsMp`
 
+### Language switcher (English / ไทย)
+- Lightweight i18n: `src/lib/i18n.ts` dictionary + `useT()` hook. Translates the UI chrome —
+  header nav, search, footer, mobile drawer + bottom nav, profile menu, and the account page
+- Preference persists in localStorage; `LangProvider` restores it after mount and sets
+  `<html lang>`. Store defaults to English so the server and first client render match (no
+  hydration mismatch); it flips to the saved language a tick later
+- Switcher lives on the account page (Settings) and in the mobile drawer
+- Scope: the static interface only — place/guide content comes from the DB and stays in its
+  source language. Adding a language = adding one dictionary object
+
+### Stations management & working reports
+- **Admin → Stations**: full CRUD (name / line / colour / known-for / sort / active) with a
+  colour picker, plus a **place → station assignment** panel — an auto-saving dropdown on every
+  place that sets its `nearest_station`. Fills the gap where stations/assignments were code-only
+- `stations` table seeded with the original 15; transport + station pages now read it live
+  (static `STATIONS` seed remains the fallback), so admin-added stations appear immediately
+- **Admin → Reports**: triage queue (open / resolved / dismissed). The place-page
+  "Correct"/"Report" buttons — previously dead — now open an inline form and write to a new
+  `reports` table
+- Architecture note: a place links to a station via a manually-set `nearest_station` text
+  field, not GPS proximity
+
+### Database cleanup & hardening
+- Dropped 3 unused empty tables (`subcategories`, `tags`, `place_tags`) — leftovers from an
+  abandoned normalized schema; the app uses denormalized columns on `places`
+  (`subcategory`, `tags_array`). `admin_emails` kept — the signup trigger reads it
+- Removed a duplicate index and duplicate / overly-broad RLS policies; wrapped `auth.*()` and
+  `get_my_role()` in scalar subqueries so they evaluate once per query, not per row
+  (performance advisories 198 → ~55, security 14 → 10)
+- Pinned `search_path` on `update_updated_at` / `handle_new_user`, revoked public RPC execute
+  on `handle_new_user`, added the missing covering index on `saved_places.place_slug`
+
 ### Stay logged in across refreshes (auth fix)
 - Root cause: `onAuthStateChange` was an `async` callback that `await`-ed Supabase
   calls (`fetchUserRole`, `fetchSavedSlugs`). supabase-js v2 holds an auth lock for
@@ -93,7 +125,9 @@ All significant changes to this project are documented here.
 ---
 
 ## Known / Pending
-- User contributions tracking (requires querying `user_submissions` by user)
-- Real photos — `Slot` SVG placeholders remain; Supabase Storage not yet wired
-- Language / Notifications settings — UI rows removed pending implementation
-- Email confirmation should be re-enabled before production launch
+- Notifications settings — UI row still to be built (needs a delivery decision: email / in-app)
+- Share button on place pages is not wired up yet
+- Photos: storage + admin tooling are ready (`/admin/places`); the 45 places still need real
+  images uploaded
+- Language: only UI chrome is translated; DB-driven place/guide content is not localised
+- Pre-launch: re-enable email confirmation + leaked-password protection (Supabase dashboard)

@@ -1,7 +1,11 @@
+'use client'
+
 import Link from 'next/link'
 import Image from 'next/image'
+import { useT } from '@/hooks/useT'
 
 export function Footer() {
+  const t = useT()
   return (
     <footer className="footer">
       <div className="wrap" style={{ display: 'grid', gap: 32, gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
@@ -11,44 +15,44 @@ export function Footer() {
             <span>Inside Thailand</span>
           </div>
           <p style={{ fontSize: 13, color: 'rgba(245,238,220,.6)', maxWidth: 280, lineHeight: 1.5 }}>
-            A discovery hub for Thailand, built by people who actually live here.
+            {t('footer.tagline')}
           </p>
         </div>
         <div>
-          <h4>Explore</h4>
-          <Link href="/map">Map</Link>
-          <Link href="/cities/bangkok">Bangkok</Link>
-          <Link href="/cities/phuket">Phuket</Link>
-          <Link href="/categories/street-food">Street food</Link>
-          <Link href="/categories/temples">Temples</Link>
+          <h4>{t('footer.explore')}</h4>
+          <Link href="/map">{t('nav.map')}</Link>
+          <Link href="/cities/bangkok">{t('footer.bangkok')}</Link>
+          <Link href="/cities/phuket">{t('footer.phuket')}</Link>
+          <Link href="/categories/street-food">{t('footer.streetFood')}</Link>
+          <Link href="/categories/temples">{t('footer.temples')}</Link>
         </div>
         <div>
-          <h4>Practical</h4>
-          <Link href="/guides">All guides</Link>
-          <Link href="/transport">Transport</Link>
-          <Link href="/tools/scams">Scam detector</Link>
-          <Link href="/tools/prices">Price checker</Link>
-          <Link href="/tools/emergency">Emergency numbers</Link>
+          <h4>{t('footer.practical')}</h4>
+          <Link href="/guides">{t('footer.allGuides')}</Link>
+          <Link href="/transport">{t('footer.transport')}</Link>
+          <Link href="/tools/scams">{t('drawer.scams')}</Link>
+          <Link href="/tools/prices">{t('drawer.prices')}</Link>
+          <Link href="/tools/emergency">{t('footer.emergency')}</Link>
         </div>
         <div>
-          <h4>Contribute</h4>
-          <Link href="/submit">Submit a place</Link>
-          <Link href="/account">My contributions</Link>
-          <Link href="/saved">Saved places</Link>
+          <h4>{t('footer.contribute')}</h4>
+          <Link href="/submit">{t('footer.submitPlace')}</Link>
+          <Link href="/account">{t('footer.myContributions')}</Link>
+          <Link href="/saved">{t('footer.savedPlaces')}</Link>
         </div>
         <div>
-          <h4>About</h4>
-          <Link href="/">About us</Link>
-          <Link href="/">Editorial standards</Link>
-          <Link href="/">Contact</Link>
-          <Link href="/">Press</Link>
+          <h4>{t('footer.about')}</h4>
+          <Link href="/">{t('footer.aboutUs')}</Link>
+          <Link href="/">{t('footer.editorial')}</Link>
+          <Link href="/">{t('footer.contact')}</Link>
+          <Link href="/">{t('footer.press')}</Link>
         </div>
       </div>
       <div className="wrap footer__bottom">
-        <div>© 2026 Inside Thailand Explorer · Made in Bangkok</div>
+        <div>{t('footer.madeIn')}</div>
         <div style={{ display: 'flex', gap: 18 }}>
-          <Link href="/">Privacy</Link>
-          <Link href="/">Terms</Link>
+          <Link href="/">{t('footer.privacy')}</Link>
+          <Link href="/">{t('footer.terms')}</Link>
         </div>
       </div>
     </footer>
