@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { PASSWORD_RULES, isPasswordValid } from '@/lib/validation'
 import I from '@/components/ui/icons'
 
 type Mode = 'signin' | 'signup'
@@ -14,6 +15,8 @@ export default function SignInPage() {
   const [mode, setMode] = useState<Mode>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [touched, setTouched] = useState(false)   // true once user starts typing a password during signup
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [signedUp, setSignedUp] = useState(false)
@@ -21,6 +24,13 @@ export default function SignInPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!supabase) { setError('Auth not configured'); return }
+
+    if (mode === 'signup' && !isPasswordValid(password)) {
+      setTouched(true)
+      setError('Please satisfy all password requirements below.')
+      return
+    }
+
     setLoading(true)
     setError('')
 
@@ -32,7 +42,6 @@ export default function SignInPage() {
       } else {
         const { data, error } = await supabase.auth.signUp({ email, password })
         if (error) throw error
-        // If email confirmation is disabled, a session is returned immediately
         if (data.session) {
           router.push('/')
         } else {
@@ -81,7 +90,10 @@ export default function SignInPage() {
     )
   }
 
-  const toggle = (m: Mode) => { setMode(m); setError('') }
+  const toggle = (m: Mode) => { setMode(m); setError(''); setTouched(false) }
+
+  // Show the checklist as soon as the user starts typing a password during signup
+  const showChecklist = mode === 'signup' && (touched || password.length > 0)
 
   return (
     <main className="wrap route-mount" style={{ padding: '40px var(--gutter)', maxWidth: 460 }}>
@@ -127,26 +139,77 @@ export default function SignInPage() {
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div className="field">
             <label>Email</label>
-            <input type="email" className="input" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} required/>
-          </div>
-          <div className="field">
-            <label>Password</label>
             <input
-              type="password"
+              type="email"
               className="input"
-              placeholder={mode === 'signup' ? 'Min 6 characters' : ''}
-              value={password}
-              onChange={e => setPassword(e.target.value)}
+              placeholder="you@example.com"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
               required
-              minLength={6}
             />
           </div>
+
+          <div className="field">
+            <label>Password</label>
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                className="input"
+                placeholder={mode === 'signup' ? 'Create a password' : ''}
+                value={password}
+                onChange={e => { setPassword(e.target.value); if (mode === 'signup') setTouched(true) }}
+                required
+                minLength={mode === 'signup' ? 8 : undefined}
+                style={{ paddingRight: 42 }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(v => !v)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                style={{
+                  position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
+                  background: 'none', border: 0, cursor: 'pointer', color: 'var(--muted)', padding: 4,
+                  display: 'flex', alignItems: 'center',
+                }}
+              >
+                {showPassword ? <I.eyeOff size={16}/> : <I.eye size={16}/>}
+              </button>
+            </div>
+
+            {showChecklist && (
+              <ul style={{ margin: '8px 0 0', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 5 }}>
+                {PASSWORD_RULES.map(rule => {
+                  const ok = rule.test(password)
+                  return (
+                    <li key={rule.key} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12.5 }}>
+                      <span style={{
+                        width: 16, height: 16, borderRadius: '50%', flexShrink: 0,
+                        display: 'grid', placeItems: 'center',
+                        background: ok ? '#2D6A4F20' : '#C13D2F14',
+                        color: ok ? '#2D6A4F' : 'var(--brand)',
+                      }}>
+                        {ok ? <I.check size={10}/> : <I.x size={10}/>}
+                      </span>
+                      <span style={{ color: ok ? '#2D6A4F' : 'var(--muted)' }}>{rule.label}</span>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </div>
+
           {error && (
             <div style={{ fontSize: 13, color: 'var(--brand)', background: '#C13D2F12', borderRadius: 8, padding: '8px 12px' }}>
               {error}
             </div>
           )}
-          <button type="submit" className="btn btn-primary btn-lg" style={{ justifyContent: 'center' }} disabled={loading}>
+
+          <button
+            type="submit"
+            className="btn btn-primary btn-lg"
+            style={{ justifyContent: 'center' }}
+            disabled={loading || (mode === 'signup' && touched && !isPasswordValid(password))}
+          >
             {loading ? 'Please wait…' : mode === 'signin' ? 'Sign in' : 'Create account'}
           </button>
         </form>

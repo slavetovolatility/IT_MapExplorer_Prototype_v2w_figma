@@ -1,6 +1,27 @@
 // Shared input-validation helpers. Kept in one place so form attributes,
 // client-side checks, and db-layer guards stay consistent.
 
+// ── Password ──────────────────────────────────────────────────────────────────
+
+// These rules must match the Supabase Auth password policy configured in
+// the dashboard (Auth → Settings → Password policy). Currently set to:
+//   - Minimum length: 8
+//   - Require lowercase: yes
+//   - Require uppercase: yes
+//   - Require number: yes
+export const PASSWORD_RULES = [
+  { key: 'length',    label: 'At least 8 characters',     test: (p: string) => p.length >= 8 },
+  { key: 'lower',     label: 'One lowercase letter',       test: (p: string) => /[a-z]/.test(p) },
+  { key: 'upper',     label: 'One uppercase letter',       test: (p: string) => /[A-Z]/.test(p) },
+  { key: 'number',    label: 'One number',                 test: (p: string) => /\d/.test(p) },
+] as const
+
+export function isPasswordValid(password: string): boolean {
+  return PASSWORD_RULES.every(r => r.test(password))
+}
+
+// ── Coordinates ───────────────────────────────────────────────────────────────
+
 // Bounding box for Thailand (with a little padding) — used to sanity-check
 // place coordinates so a typo doesn't drop a pin in the ocean or another country.
 // Thailand spans roughly 5.6–20.5°N and 97.3–105.6°E.

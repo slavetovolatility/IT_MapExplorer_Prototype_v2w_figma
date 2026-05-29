@@ -83,5 +83,7 @@ I.edit      = (p={}) => wrap(<><path d="M4 20h4l11-11-4-4L4 16z"/><path d="m15 5
 I.trash     = (p={}) => wrap(<><path d="M4 7h16M10 11v6M14 11v6M5 7l1 12h12l1-12"/><path d="M9 7V4h6v3"/></>, p)
 I.camera    = (p={}) => wrap(<><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></>, p)
 I.image     = (p={}) => wrap(<><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></>, p)
+I.eye       = (p={}) => wrap(<><path d="M1 12S5 4 12 4s11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></>, p)
+I.eyeOff    = (p={}) => wrap(<><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20C5 20 1 12 1 12a18.6 18.6 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9 9 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="m1 1 22 22"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></>, p)
 
 export default I
